@@ -31,7 +31,7 @@
         company (:company body)
         role (:role body)]
     (if (and (string? company) (string? role) (seq company) (seq role))
-      (let [new-app {:compnay company :role role :status :applied}]
+      (let [new-app {:company company :role role :status :applied}]
         (save-applications (conj (vec (load-applications)) new-app))
         (json-response 201 new-app))
       (json-response 400 {:error "company and role are required"}))))
@@ -55,6 +55,30 @@
         (save-applications updated)
         (json-response 200 (first (filter same? updated)))))))
 
+
+(def allowed-origins
+  #{"http://localhost:8080"
+    "https://your-project.vercel.app"})
+
+(defn wrap-cors [handler]
+  (fn [request]
+    (let [origin (get-in request [:headers "origin"])
+          response
+          (if (= :options (:request-method request))
+            {:status 200
+             :headers {}
+             :body ""}
+            (handler request))]
+
+      (cond-> response
+        (contains? allowed-origins origin)
+        (update :headers merge
+                {"Access-Control-Allow-Origin" origin
+                 "Access-Control-Allow-Methods" "GET, POST, PATCH, OPTIONS"
+                 "Access-Control-Allow-Headers" "Content-Type"
+                 "Vary" "Origin"})))))
+
+
 (defn handler [request]
   (case [(:request-method request) (:uri request)]
     [:get "/"] {:status  200 
@@ -66,6 +90,12 @@
     (json-response 404 {:error "Not found"})))
 
 
-(defn -main[& _args]
-  (println "server is running on http://localhost:3000")
-  (run-jetty handler {:port 3000}))
+(defn -main [& _args]
+  (let [port (Integer/parseInt
+              (or (System/getenv "PORT") "3000"))]
+
+    (println (str "Server running on port " port))
+
+    (run-jetty (wrap-cors handler)
+               {:port port
+                :host "0.0.0.0"})))
