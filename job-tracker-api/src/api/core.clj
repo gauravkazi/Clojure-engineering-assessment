@@ -15,6 +15,17 @@
 (defn save-applications [apps]
   (spit data-file (with-out-str (pprint apps))))
 
+(defn ensure-application-ids []
+  (let [apps (vec (load-applications))
+        updated (mapv
+                 (fn [app]
+                   (if (:id app)
+                     app
+                     (assoc app :id (str (random-uuid)))))
+                 apps)]
+    (when (not= apps updated)
+      (save-applications updated))))
+
 (defn json-response [status data]
   {:status status
    :headers {"Content-Type" "application/json"}
@@ -31,29 +42,45 @@
         company (:company body)
         role (:role body)]
     (if (and (string? company) (string? role) (seq company) (seq role))
-      (let [new-app {:company company :role role :status :applied}]
+      (let [new-app {:id (str (random-uuid))
+                     :company company
+                     :role role
+                     :status :applied}]
         (save-applications (conj (vec (load-applications)) new-app))
         (json-response 201 new-app))
       (json-response 400 {:error "company and role are required"}))))
 
+
 (defn update-status [request]
   (let [body (parse-body request)
-        company (:company body)
+        id (:id body)
         status (some-> (:status body) keyword)
         apps (vec (load-applications))
-        same? (fn [app] (= company (:company app)))]
+        same? (fn [app] (= id (:id app)))]
+
     (cond
+      (not (string? id))
+      (json-response 400 {:error "Application ID is required"})
+
       (not (valid-statuses status))
-      (json-response 400 {:error "status must be one of: applied, interview, offer, rejected"})
+      (json-response 400 {:error "Invalid status"})
 
       (not-any? same? apps)
-      (json-response 404 {:error (str "No application found for: " company)})
+      (json-response 404 {:error "Application not found"})
 
       :else
-      (let [updated (mapv (fn [app] (if (same? app) (assoc app :status status) app))
-                          apps)]
+      (let [updated
+            (mapv
+             (fn [app]
+               (if (same? app)
+                 (assoc app :status status)
+                 app))
+             apps)]
+
         (save-applications updated)
-        (json-response 200 (first (filter same? updated)))))))
+
+        (json-response 200
+                       (first (filter same? updated)))))))
 
 
 (def allowed-origins
@@ -93,6 +120,7 @@
 (defn -main [& _args]
   (let [port (Integer/parseInt
               (or (System/getenv "PORT") "3000"))]
+    (ensure-application-ids)
 
     (println (str "Server running on port " port))
 
