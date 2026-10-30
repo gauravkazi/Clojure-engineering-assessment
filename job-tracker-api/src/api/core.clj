@@ -85,7 +85,7 @@
 
 (def allowed-origins
   #{"http://localhost:8080"
-    "https://your-project.vercel.app"})
+    "clojure-engineering-assessment-job.vercel.app"})
 
 (defn wrap-cors [handler]
   (fn [request]
