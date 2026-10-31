@@ -1,10 +1,10 @@
 [{:company "Alpha",
   :role "Backend engineering",
-  :status :interview,
+  :status :offer,
   :id "e52a99ec-e73b-4bfc-91d1-71fc27cf2181"}
  {:company "Beta",
   :role "Engineering Intern",
-  :status :applied,
+  :status :interview,
   :id "c2d6bfb8-a277-43d7-9934-bd8e2475c719"}
  {:company "Gama",
   :role "Software Developer",
@@ -12,11 +12,11 @@
   :id "ac7d290c-c5cc-49e9-bdc1-cbcded3347d9"}
  {:company "Theta",
   :role "Coffee Maker",
-  :status :rejected,
+  :status :interview,
   :id "574f975c-3286-4424-bf84-eb2740ffa4b4"}
  {:company "Holi",
   :role "Backend engineering",
-  :status :rejected,
+  :status :offer,
   :id "b764bf8c-4707-4e1d-8938-587417c21680"}
  {:company "Holi",
   :role "React Developer",
@@ -24,9 +24,9 @@
   :id "cc7b865d-7e97-4372-b675-cd423c5ead07"}
  {:company "spotify",
   :role "backend developer",
-  :status :offer,
+  :status :interview,
   :id "f92ab9a2-b680-4ccd-800c-2007cf4300b9"}
  {:id "1bb942a8-bce7-4b1f-8ecf-cc8249e8fc9f",
   :company "tesla",
   :role "software developer",
-  :status :interview}]
+  :status :offer}]
