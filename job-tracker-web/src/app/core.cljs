@@ -1,6 +1,6 @@
-
 (ns app.core
   (:require
+   [clojure.string :as str]
    [reagent.core :as r]
    [reagent.dom.client :as rdom]))
 
@@ -10,7 +10,9 @@
    (.getElementById js/document "app")))
 
 (def api-url
-   " https://clojure-engineering-assessment.onrender.com")
+  (if (= "localhost" js/location.hostname)
+    "http://localhost:3000"
+    " https://job-tracker-api-qdpd.onrender.com"))
 
 ;; Application data
 (defonce applications
@@ -187,6 +189,84 @@
 
    [:button {:type "submit"} "Add Application"]])
 
+
+;; AI job match
+(defonce match-state
+  (r/atom {:description "" :loading? false :result nil :error nil}))
+
+(defn run-match! []
+  (let [description (:description @match-state)]
+    (swap! match-state assoc :loading? true :error nil :result nil)
+    (-> (js/fetch
+         (str api-url "/match")
+         #js {:method "POST"
+              :headers #js {"Content-Type" "application/json"}
+              :body (js/JSON.stringify
+                     (clj->js {:description description}))})
+        (.then
+         (fn [response]
+           (-> (.json response)
+               (.then
+                (fn [data]
+                  (let [data (js->clj data :keywordize-keys true)]
+                    (if (.-ok response)
+                      (swap! match-state assoc :loading? false :result data)
+                      (swap! match-state assoc
+                             :loading? false
+                             :error (or (:error data) "Request failed")))))))))
+        (.catch
+         (fn [error]
+           (js/console.error error)
+           (swap! match-state assoc
+                  :loading? false
+                  :error "Could not reach the server"))))))
+
+;; Fetch the latest saved AI match from PostgreSQL
+(defn fetch-latest-match! []
+  (-> (js/fetch (str api-url "/match/latest"))
+      (.then
+       (fn [response]
+         (if (.-ok response)
+           (.json response)
+           (js/Promise.resolve nil))))
+      (.then
+       (fn [data]
+         (when data
+           (let [result (js->clj data :keywordize-keys true)]
+             (swap! match-state assoc :result result)))))
+      (.catch
+       (fn [error]
+         (js/console.error "Failed to fetch latest match:" error)))))
+
+
+(defn match-panel []
+  (let [{:keys [description loading? result error]} @match-state]
+    [:section.match-panel
+     [:h2 "Job Match"]
+     [:p "Paste a job description to compare it with my skills."]
+     [:textarea
+      {:rows 8
+       :placeholder "Paste a job description here"
+       :value description
+       :on-change #(swap! match-state assoc
+                          :description (.. % -target -value))}]
+     [:button
+      {:disabled (or loading? (str/blank? description))
+       :on-click #(run-match!)}
+      (if loading? "Checking..." "Check Match")]
+     (when error
+       [:p.match-error error])
+     (when result
+       [:div.match-result
+        [:h3 "Score: " (:score result) " / 100"]
+        [:p (:summary result)]
+        [:h4 "Skills you have"]
+        [:ul (for [s (:matching-skills result)]
+               ^{:key s} [:li s])]
+        [:h4 "Skills to learn"]
+        [:ul (for [s (:missing-skills result)]
+               ^{:key s} [:li s])]])]))
+
 ;; Main dashboard
 (defn dashboard []
   [:main.dashboard
@@ -200,6 +280,8 @@
 
    [:section
     [:h2 "Your Applications"]
+
+  
 ;; add application form
     [add-application-form]
 
@@ -211,6 +293,8 @@
      [filter-button :rejected "Rejected"]]
 
     [application-table]]
+   
+   [match-panel]
 
    [:footer
     "Job Tracker | Built with ClojureScript and Reagent"]])
@@ -218,4 +302,5 @@
 ;; Application entry point
 (defn init []
   (rdom/render root [dashboard])
-  (fetch-applications))
+  (fetch-applications)
+  (fetch-latest-match!))
