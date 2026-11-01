@@ -10,3 +10,4 @@ node_modules/
 # ClojureScript generated cache
 .shadow-cljs/
 .env
+job-tracker-web/public/js/cljs-runtime/
