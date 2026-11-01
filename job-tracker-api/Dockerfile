@@ -8,6 +8,7 @@ RUN clojure -P
 
 COPY src ./src
 COPY applications.edn .
+COPY skills.edn .
 
 EXPOSE 3000
 
