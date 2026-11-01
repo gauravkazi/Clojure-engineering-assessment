@@ -1,17 +1,44 @@
 (ns api.db
   (:require [next.jdbc :as jdbc]
-             [next.jdbc.result-set :as rs]
-            [jsonista.core :as json]))
+            [next.jdbc.result-set :as rs]
+            [jsonista.core :as json]
+            [clojure.string :as str])
+  (:import [org.postgresql.ds PGSimpleDataSource]
+           [java.net URI URLDecoder]))
 
-(def db-spec
-  {:dbtype "postgresql"
-   :dbname "job_tracker"
-   :host "localhost"
-   :port 5432
-   :user (System/getenv "USER")})
+
+(defn create-datasource []
+  (if-let [database-url (System/getenv "DATABASE_URL")]
+    ;; Render PostgreSQL
+    (let [uri (URI. database-url)
+          user-info (.getUserInfo uri)
+          [username password] (str/split user-info #":" 2)
+          datasource (PGSimpleDataSource.)]
+
+      (.setServerNames datasource (into-array String [(.getHost uri)]))
+      (.setPortNumbers datasource
+                       (int-array [(if (pos? (.getPort uri))
+                                     (.getPort uri)
+                                     5432)]))
+      (.setDatabaseName datasource (str/replace (.getPath uri) #"^/" ""))
+      (.setUser datasource (URLDecoder/decode username "UTF-8"))
+      (.setPassword datasource (URLDecoder/decode password "UTF-8"))
+      (.setSslMode datasource "require")
+
+      datasource)
+
+    ;; Local PostgreSQL
+    (jdbc/get-datasource
+     {:dbtype "postgresql"
+      :dbname "job_tracker"
+      :host "localhost"
+      :port 5432
+      :user (System/getenv "USER")})))
 
 (def datasource
-  (jdbc/get-datasource db-spec))
+  (create-datasource))
+
+
 
 (defn save-match! [description result]
   (jdbc/execute-one!
