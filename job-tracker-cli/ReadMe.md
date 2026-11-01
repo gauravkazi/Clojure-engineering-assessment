@@ -1,4 +1,4 @@
-# Job Application Tracker (CLI)
+# Job Application Tracker (CLI) Demo 1
 
 A small command-line tool, written in Clojure and run with Babashka, for tracking job applications.
 
