@@ -12,7 +12,6 @@ Each demo explores a different approach to solving this problem, from command-li
 3	Job Tracker Web Dashboard	job-tracker-web	ClojureScript, Reagent, React, Shadow CLJS
 4	AI/LLM AI Resume & Job Description Matcher	Integrated into the Job Tracker API and Web Dashboard	Clojure, Gemini API, Hato, PostgreSQL
 
-⸻
 
 1. CLI Job Tracker
 
