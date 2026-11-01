@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "react": "^19.3.1",
-    "react-dom": "^19.3.1",
-    "reagent": "^1.0.1"
+    "react-dom": "^19.3.1"
   }
 }

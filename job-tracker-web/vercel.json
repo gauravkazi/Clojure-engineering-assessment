@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "public",
-  "installCommand": "npm install"
+  "buildCommand": "echo \"Using prebuilt files in public/\"",
+  "installCommand": "echo \"No install needed\"",
+  "outputDirectory": "public"
 }
