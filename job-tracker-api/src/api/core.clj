@@ -28,9 +28,9 @@
       (save-applications updated))))
 
 (defn json-response [status data]
-  {:status  status
+  {:status status
    :headers {"Content-Type" "application/json"}
-   :body    (json/write-value-as-string data)})
+   :body (json/write-value-as-string data)})
 
 (defn parse-body [request]
   (try
@@ -39,34 +39,31 @@
     (catch Exception _ nil)))
 
 (defn create-application [request]
-  (let [body    (parse-body request)
+  (let [body (parse-body request)
         company (:company body)
-        role    (:role body)]
+        role (:role body)]
     (if (and (string? company) (string? role) (seq company) (seq role))
-      (let [new-app {:id      (str (random-uuid))
+      (let [new-app {:id (str (random-uuid))
                      :company company
-                     :role    role
-                     :status  :applied}]
+                     :role role
+                     :status :applied}]
         (save-applications (conj (vec (load-applications)) new-app))
         (json-response 201 new-app))
       (json-response 400 {:error "company and role are required"}))))
 
 (defn update-status [request]
-  (let [body   (parse-body request)
-        id     (:id body)
-        status (some-> (:status body) keyword)
-        apps   (vec (load-applications))
-        same?  (fn [app] (= id (:id app)))]
+  (let [body(parse-body request)
+        id(:id body)
+        status(some-> (:status body) keyword)
+        apps(vec (load-applications))
+        same?(fn [app] (= id (:id app)))]
     (cond
       (not (string? id))
       (json-response 400 {:error "Application ID is required"})
-
       (not (valid-statuses status))
       (json-response 400 {:error "Invalid status"})
-
       (not-any? same? apps)
       (json-response 404 {:error "Application not found"})
-
       :else
       (let [updated (mapv (fn [app]
                             (if (same? app)
@@ -114,7 +111,7 @@
 
 (defn wrap-cors [handler]
   (fn [request]
-    (let [origin   (get-in request [:headers "origin"])
+    (let [origin(get-in request [:headers "origin"])
           response (if (= :options (:request-method request))
                      {:status 200 :headers {} :body ""}
                      (handler request))]
@@ -124,13 +121,13 @@
                 {"Access-Control-Allow-Origin"  origin
                  "Access-Control-Allow-Methods" "GET, POST, PATCH, OPTIONS"
                  "Access-Control-Allow-Headers" "Content-Type"
-                 "Vary"                         "Origin"})))))
+                 "Vary" "Origin"})))))
 
 (defn handler [request]
   (case [(:request-method request) (:uri request)]
-    [:get "/"]               {:status  200
-                              :headers {"Content-Type" "text/plain"}
-                              :body    "Hello from the job tracker API!"}
+    [:get "/"]{:status  200
+               :headers {"Content-Type" "text/plain"} 
+               :body    "Hello from the job tracker API!"}
     [:get "/applications"](json-response 200 (load-applications))
     [:post "/applications"](create-application request)
     [:patch "/applications"](update-status request)

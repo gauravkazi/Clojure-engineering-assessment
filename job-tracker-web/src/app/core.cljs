@@ -28,18 +28,15 @@
 
 (defn fetch-applications []
   (-> (js/fetch (str api-url "/applications"))
-
       (.then
        (fn [response]
-         (.json response)))
-
+         (.json response))) 
       (.then
        (fn [data]
          (reset! applications
                  (mapv
                   #(update % :status keyword)
-                  (js->clj data :keywordize-keys true)))))
-
+                  (js->clj data :keywordize-keys true))))) 
       (.catch
        (fn [error]
          (js/console.error error)))))
@@ -53,7 +50,7 @@
             :body (js/JSON.stringify
                    (clj->js
                     {:id (:id app)
-                     :status (name new-status)}))})
+                     :status (name new-status)}))}) 
       (.then
        (fn [response]
          (if (.-ok response)
@@ -72,14 +69,12 @@
             :body (js/JSON.stringify
                    (clj->js
                     {:company company
-                     :role role}))})
-
+                     :role role}))}) 
       (.then
        (fn [response]
          (if (.-ok response)
            (fetch-applications)
            (js/console.error "Failed to add application"))))
-
       (.catch
        (fn [error]
          (js/console.error error)))))
@@ -103,15 +98,11 @@
 (defn summary-cards []
   (let [apps @applications]
     [:section.summary-grid
-
      [stat-card "Total Applications" (count apps)]
-
      [stat-card "Applied"
       (count (filter #(= :applied (:status %)) apps))]
-
      [stat-card "Interviews"
       (count (filter #(= :interview (:status %)) apps))]
-
      [stat-card "Offers"
       (count (filter #(= :offer (:status %)) apps))]]))
 
@@ -128,7 +119,7 @@
 (defn application-table []
   (let [apps (if (= @selected-status :all)
                @applications
-               (filter #(= @selected-status (:status %))
+               (filter #(= @selected-status (:status %)) 
                        @applications))] 
     [:table
      [:thead
@@ -174,19 +165,17 @@
         (add-application @company-input @role-input)
         (reset! company-input "")
         (reset! role-input "")))}
-
    [:input
     {:type "text"
      :placeholder "Company name"
      :value @company-input
      :on-change #(reset! company-input (.. % -target -value))}]
-
+   
    [:input
     {:type "text"
      :placeholder "Job role"
      :value @role-input
      :on-change #(reset! role-input (.. % -target -value))}]
-
    [:button {:type "submit"} "Add Application"]])
 
 
@@ -248,7 +237,7 @@
       {:rows 8
        :placeholder "Paste a job description here"
        :value description
-       :on-change #(swap! match-state assoc
+       :on-change #(swap! match-state assoc 
                           :description (.. % -target -value))}]
      [:button
       {:disabled (or loading? (str/blank? description))
@@ -270,7 +259,6 @@
 ;; Main dashboard
 (defn dashboard []
   [:main.dashboard
-
    [:header
     [:p "CAREER MANAGEMENT"]
     [:h1 "Job Tracker"]

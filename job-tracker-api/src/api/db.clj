@@ -24,10 +24,10 @@
       (.setUser datasource (URLDecoder/decode username "UTF-8"))
       (.setPassword datasource (URLDecoder/decode password "UTF-8"))
       (.setSslMode datasource "require")
-
       datasource)
 
     ;; Local PostgreSQL
+
     (jdbc/get-datasource
      {:dbtype "postgresql"
       :dbname "job_tracker"
