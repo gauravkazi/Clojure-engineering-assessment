@@ -4,9 +4,11 @@
             [hato.client :as http]
             [jsonista.core :as json]))
 
+;; get the skills from the skills.edn file
 (defn load-skills []
   (edn/read-string (slurp "skills.edn")))
 
+;; prompt that sent to AI
 (defn build-prompt [skills job-description]
   (str "You are helping a junior developer check how well they fit a job.\n\n"
        "Candidate skills: " (str/join ", " skills) "\n\n"
@@ -17,6 +19,7 @@
        "Only list a skill as matching if it appears in the candidate skills. "
        "Do not invent skills."))
 
+;; taek AI Response clear, convert, check if valid or not
 (defn parse-result [text]
   (try
     (let [clean (-> text
@@ -40,8 +43,10 @@
 (def models
   ["gemini-3.5-flash" "gemini-3.5-flash-lite" "gemini-flash-lite-latest" "gemini-3.8-flash"])
 
+;; sending and receiving prompt from AI
 (defn call-model [model prompt api-key]
   (try
+    ;; api url
     (let [url  (str "https://generativelanguage.googleapis.com/v1beta/models/"
                     model ":generateContent")
           resp (http/post url
@@ -61,6 +66,7 @@
     (catch Exception _
       {:error "Could not reach the LLM"})))
 
+;; manages the AI and tries other model
 (defn call-llm [prompt]
   (let [api-key (System/getenv "GEMINI_API_KEY")]
     (if (str/blank? api-key)
@@ -73,6 +79,7 @@
             (recur more)
             result))))))
 
+;;  connects all your AI matching functions 
 (defn match-job [job-description]
   (let [{:keys [ok error]} (call-llm (build-prompt (load-skills) job-description))]
     (if error

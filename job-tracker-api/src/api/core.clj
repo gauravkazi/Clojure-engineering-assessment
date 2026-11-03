@@ -8,41 +8,46 @@
             [clojure.string :as str]))
 
 (def data-file "applications.edn")
-
 (def valid-statuses #{:applied :interview :offer :rejected})
 
+;; read the application stored in the .edn file 
 (defn load-applications []
   (edn/read-string (slurp data-file)))
 
+;; saves job applications into the .edn file
 (defn save-applications [apps]
   (spit data-file (with-out-str (pprint apps))))
 
+;; every application has a unique id
 (defn ensure-application-ids []
-  (let [apps    (vec (load-applications))
+  (let [apps (vec (load-applications))
         updated (mapv (fn [app]
                         (if (:id app)
                           app
-                          (assoc app :id (str (random-uuid)))))
+                          (assoc app :id (str (random-uuid))))) ;; if not then creaet new id using random-uuid
                       apps)]
     (when (not= apps updated)
       (save-applications updated))))
 
+;; json response for frontend
 (defn json-response [status data]
   {:status status
    :headers {"Content-Type" "application/json"}
    :body (json/write-value-as-string data)})
 
+;; convert frontend json data to clojure data
 (defn parse-body [request]
   (try
     (json/read-value (slurp (:body request))
                      json/keyword-keys-object-mapper)
     (catch Exception _ nil)))
 
+;; create new application when frontend send data backend
 (defn create-application [request]
   (let [body (parse-body request)
         company (:company body)
         role (:role body)]
-    (if (and (string? company) (string? role) (seq company) (seq role))
+    (if (and (string? company) (string? role) (seq company) (seq role)) ;; check if role and company are string and is that empty(seq)
       (let [new-app {:id (str (random-uuid))
                      :company company
                      :role role
@@ -51,6 +56,7 @@
         (json-response 201 new-app))
       (json-response 400 {:error "company and role are required"}))))
 
+;;  updates the status of an existing job application using its id
 (defn update-status [request]
   (let [body(parse-body request)
         id(:id body)
@@ -73,6 +79,7 @@
         (save-applications updated)
         (json-response 200 (first (filter same? updated)))))))
 
+;; analyzing job description using AI and saving the matching results in database.
 (defn match-application [request]
   (let [body (parse-body request)
         description (:description body)]
@@ -95,6 +102,7 @@
               (println "Database save failed:" (.getMessage e))
               (json-response 500 {:error "AI analysis succeeded but saving result failed"}))))))))
 
+;; get the latest match request form the database 
 (defn latest-match [_request]
   (try
     (if-let [result (db/get-latest-match)] 
@@ -104,10 +112,12 @@
       (println "Database retrieval failed:" (.getMessage e))
       (json-response 500 {:error "Could not retrieve previous analysis"}))))
 
-
+;; used this for cors
 (def allowed-origins
   #{"http://localhost:8080"
     "https://clojure-engineering-assessment-job.vercel.app"})
+
+;;  CORS middleware
 
 (defn wrap-cors [handler]
   (fn [request]
@@ -122,7 +132,7 @@
                  "Access-Control-Allow-Methods" "GET, POST, PATCH, OPTIONS"
                  "Access-Control-Allow-Headers" "Content-Type"
                  "Vary" "Origin"})))))
-
+;; handler function 
 (defn handler [request]
   (case [(:request-method request) (:uri request)]
     [:get "/"]{:status  200
@@ -135,6 +145,7 @@
     [:get "/match/latest"](latest-match request)
     (json-response 404 {:error "Not found"})))
 
+;; starting point of backend 
 (defn -main [& _args]
   (let [port (Integer/parseInt (or (System/getenv "PORT") "3000"))]
     (ensure-application-ids)

@@ -1,12 +1,12 @@
 (ns api.db
-  (:require [next.jdbc :as jdbc]
+  (:require [next.jdbc :as jdbc] 
             [next.jdbc.result-set :as rs]
             [jsonista.core :as json]
-            [clojure.string :as str])
-  (:import [org.postgresql.ds PGSimpleDataSource]
-           [java.net URI URLDecoder]))
+            [clojure.string :as str]) 
+  (:import [org.postgresql.ds PGSimpleDataSource] ;; make a connection to your PostgreSQL database.
+           [java.net URI URLDecoder])) ;; java class used to decode the url-encoded text
 
-
+;; creates a PostgreSQL database connection using the DATABASE_URL
 (defn create-datasource []
   (if-let [database-url (System/getenv "DATABASE_URL")]
     ;; Render PostgreSQL
@@ -23,11 +23,10 @@
       (.setDatabaseName datasource (str/replace (.getPath uri) #"^/" ""))
       (.setUser datasource (URLDecoder/decode username "UTF-8"))
       (.setPassword datasource (URLDecoder/decode password "UTF-8"))
-      (.setSslMode datasource "require")
+      (.setSslMode datasource "require") ;; require an encrypted SSL connection to PostgreSQL.
       datasource)
 
-    ;; Local PostgreSQL
-
+    ;; Local PostgreSQL 
     (jdbc/get-datasource
      {:dbtype "postgresql"
       :dbname "job_tracker"
@@ -39,7 +38,7 @@
   (create-datasource))
 
 
-
+;; saves the AI job-matching result
 (defn save-match! [description result]
   (jdbc/execute-one!
    datasource
@@ -52,6 +51,7 @@
     (json/write-value-as-string (:matching-skills result))
     (json/write-value-as-string (:missing-skills result))]))
 
+;; get the latest match form database 
 (defn get-latest-match []
   (when-let [row
              (jdbc/execute-one!
