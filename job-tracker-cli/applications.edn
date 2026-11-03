@@ -1,6 +1,7 @@
 [{:company "Alpha", :role "Backend engineering", :status :interview}
  {:company "Beta", :role "Engineering Intern", :status :interview}
- {:company "Gama", :role "Software Developer", :status :applied}
+ {:company "Gama", :role "Software Developer", :status :offer}
  {:company "Theta", :role "Coffee Maker", :status :applied}
  {:company "Holi", :role "Backend engineering", :status :applied}
- {:company "Holi", :role "React Developer", :status :applied}]
+ {:company "Holi", :role "React Developer", :status :applied}
+ {:company "google", :role "AI", :status :interview}]
